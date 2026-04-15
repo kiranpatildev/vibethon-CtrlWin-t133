@@ -1,0 +1,117 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    @apply bg-neural-bg text-neural-text font-body;
+    min-height: 100vh;
+  }
+  h1, h2, h3, h4, h5, h6 { @apply font-heading; }
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { @apply bg-neural-surface; }
+  ::-webkit-scrollbar-thumb { @apply bg-neural-border rounded-full; }
+  ::-webkit-scrollbar-thumb:hover { @apply bg-neural-accent/50; }
+}
+
+@layer components {
+  .card {
+    @apply bg-neural-card border border-neural-border rounded-xl p-5;
+  }
+  .card-hover {
+    @apply card transition-all duration-200 hover:border-neural-accent/40 hover:shadow-lg hover:shadow-neural-accent/10;
+  }
+  .btn-primary {
+    @apply bg-neural-accent text-neural-bg font-semibold px-5 py-2.5 rounded-lg
+           hover:brightness-110 active:scale-95 transition-all duration-150
+           disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  .btn-secondary {
+    @apply bg-neural-card border border-neural-border text-neural-text font-medium px-5 py-2.5 rounded-lg
+           hover:border-neural-accent/50 hover:bg-neural-surface active:scale-95 transition-all duration-150;
+  }
+  .btn-ghost {
+    @apply text-neural-muted font-medium px-4 py-2 rounded-lg
+           hover:text-neural-text hover:bg-neural-card/50 transition-all duration-150;
+  }
+  .badge {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold;
+  }
+  .badge-accent { @apply badge bg-neural-accent/20 text-neural-accent border border-neural-accent/30; }
+  .badge-xp { @apply badge bg-neural-xp/20 text-neural-xp border border-neural-xp/30; }
+  .badge-success { @apply badge bg-neural-success/20 text-neural-success border border-neural-success/30; }
+  .badge-purple { @apply badge bg-neural-purple/20 text-neural-purple border border-neural-purple/30; }
+  .input {
+    @apply bg-neural-surface border border-neural-border rounded-lg px-4 py-2.5 text-neural-text w-full
+           placeholder:text-neural-muted focus:outline-none focus:border-neural-accent/60 focus:ring-1 focus:ring-neural-accent/30
+           transition-all duration-150;
+  }
+  .progress-bar {
+    @apply bg-neural-border rounded-full overflow-hidden;
+  }
+  .progress-fill {
+    @apply bg-gradient-to-r from-neural-accent to-neural-purple h-full rounded-full transition-all duration-500;
+  }
+  .section-title {
+    @apply text-xl font-heading font-semibold text-neural-text mb-1;
+  }
+  .section-subtitle {
+    @apply text-sm text-neural-muted;
+  }
+  .xp-text { @apply text-neural-xp font-bold font-heading; }
+  .gradient-text {
+    @apply bg-gradient-accent bg-clip-text text-transparent;
+  }
+  .glow-accent {
+    box-shadow: 0 0 30px rgba(0, 212, 255, 0.2);
+  }
+  .nav-link {
+    @apply flex items-center gap-3 px-4 py-2.5 rounded-lg text-neural-muted font-medium
+           hover:text-neural-text hover:bg-neural-card/60 transition-all duration-150;
+  }
+  .nav-link-active {
+    @apply nav-link text-neural-accent bg-neural-accent/10 border border-neural-accent/20;
+  }
+  /* Markdown content styles */
+  .prose-neural h2 { @apply text-xl font-heading font-semibold text-neural-accent mt-8 mb-4; }
+  .prose-neural h3 { @apply text-lg font-heading font-semibold text-neural-text mt-6 mb-3; }
+  .prose-neural p { @apply text-neural-muted leading-relaxed mb-4; }
+  .prose-neural ul { @apply list-disc list-inside space-y-2 mb-4 text-neural-muted; }
+  .prose-neural ol { @apply list-decimal list-inside space-y-2 mb-4 text-neural-muted; }
+  .prose-neural li { @apply leading-relaxed; }
+  .prose-neural strong { @apply text-neural-text font-semibold; }
+  .prose-neural code { @apply bg-neural-surface text-neural-accent font-mono px-1.5 py-0.5 rounded text-sm; }
+  .prose-neural pre { @apply bg-neural-surface border border-neural-border rounded-xl p-4 mb-4 overflow-x-auto; }
+  .prose-neural pre code { @apply bg-transparent px-0 py-0 text-neural-text; }
+  .prose-neural blockquote { @apply border-l-4 border-neural-accent/40 pl-4 italic text-neural-muted mb-4; }
+  .prose-neural table { @apply w-full border-collapse mb-4 text-sm; }
+  .prose-neural th { @apply bg-neural-surface border border-neural-border px-4 py-2 text-left font-semibold text-neural-text; }
+  .prose-neural td { @apply border border-neural-border px-4 py-2 text-neural-muted; }
+  .prose-neural a { @apply text-neural-accent hover:underline; }
+  /* Page transition */
+  .page-enter { @apply animate-fade-in; }
+}
+
+/* Neural network background pattern */
+.neural-bg-pattern {
+  background-image: 
+    radial-gradient(circle at 20% 50%, rgba(0, 212, 255, 0.05) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.05) 0%, transparent 50%),
+    radial-gradient(circle at 50% 80%, rgba(0, 212, 255, 0.03) 0%, transparent 50%);
+}
+
+/* Glowing border animation */
+@keyframes borderGlow {
+  0%, 100% { border-color: rgba(0, 212, 255, 0.3); }
+  50% { border-color: rgba(0, 212, 255, 0.7); }
+}
+.border-glow { animation: borderGlow 2s ease-in-out infinite; }
+
+/* XP float animation */
+@keyframes xpFloat {
+  0% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(-60px) scale(1.2); }
+}
+.xp-float { animation: xpFloat 1.5s ease-out forwards; }

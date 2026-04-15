@@ -1,23 +1,15 @@
-"""
-URL configuration for neuralpath project.
-
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/4.2/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
-"""
-
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
+from apps.core.views import PingView, RegisterView, MeView
 
 urlpatterns = [
-    path("admin/", admin.site.urls),
+    path('admin/', admin.site.urls),
+    path('api/ping/', PingView.as_view(), name='ping'),
+    path('api/auth/register/', RegisterView.as_view(), name='register'),
+    path('api/me/', MeView.as_view(), name='me'),
+    path('api/', include('apps.curriculum.urls')),
+    path('api/', include('apps.quiz.urls')),
+    path('api/', include('apps.datasets.urls')),
+    path('api/', include('apps.leaderboard.urls')),
+    path('api/', include('apps.gemini.urls')),
 ]
