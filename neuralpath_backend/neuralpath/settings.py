@@ -122,6 +122,7 @@ SUPABASE_ANON_KEY = os.getenv('SUPABASE_ANON_KEY', '')
 
 # Gemini
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', '')
+GEMINI_MODEL = os.getenv('GEMINI_MODEL', 'gemini-2.5-flash')
 
 # Cache (for JWKS caching and rate limiting)
 CACHES = {

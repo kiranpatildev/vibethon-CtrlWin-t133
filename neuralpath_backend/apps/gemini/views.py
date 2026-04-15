@@ -3,19 +3,17 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
-from apps.core.views import get_or_create_profile
-from .client import call_gemini, check_rate_limit
+from .client import call_gemini, call_gemini_json, check_rate_limit
 
 
 class AITutorView(APIView):
-    """POST /api/ai/tutor/ — AI tutor chat."""
+    """POST /api/ai/tutor/ — AI tutor chat powered by Gemini."""
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        payload = request.user
-        uid = payload.get('sub', 'anon')
+        user_id = request.user.id
 
-        if check_rate_limit(uid):
+        if check_rate_limit(user_id, cooldown_seconds=3):
             return Response({'error': 'Please wait a moment before asking again.'}, status=status.HTTP_429_TOO_MANY_REQUESTS)
 
         question = request.data.get('question', '').strip()
@@ -25,10 +23,11 @@ class AITutorView(APIView):
             return Response({'error': 'question is required'}, status=status.HTTP_400_BAD_REQUEST)
 
         system_prompt = (
-            f"You are NeuralPath, an expert AIML tutor. "
+            f"You are NeuralPath, a friendly and expert AI/ML tutor. "
             f"The student is currently studying: {topic_context}. "
-            f"Answer their question clearly and concisely. "
-            f"Use simple analogies. Do NOT answer questions unrelated to AI/ML."
+            f"Answer their question clearly, concisely, and accurately. "
+            f"Use simple analogies when helpful. Keep answers to 3-5 sentences unless more depth is needed. "
+            f"Do NOT answer questions completely unrelated to AI, ML, or data science."
         )
 
         try:
@@ -39,14 +38,13 @@ class AITutorView(APIView):
 
 
 class AIQuizGenView(APIView):
-    """POST /api/ai/quiz-gen/ — generate quiz questions."""
+    """POST /api/ai/quiz-gen/ — Generate quiz questions with Gemini JSON mode."""
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        payload = request.user
-        uid = payload.get('sub', 'anon')
+        user_id = request.user.id
 
-        if check_rate_limit(uid, cooldown_seconds=10):
+        if check_rate_limit(user_id, cooldown_seconds=10):
             return Response({'error': 'Please wait before generating another quiz.'}, status=status.HTTP_429_TOO_MANY_REQUESTS)
 
         topic = request.data.get('topic', 'Machine Learning')
@@ -54,36 +52,50 @@ class AIQuizGenView(APIView):
         count = min(int(request.data.get('count', 5)), 10)
 
         system_prompt = (
-            f"Generate {count} multiple choice questions about {topic} "
-            f"at {difficulty} difficulty for an AIML learner. "
-            f"Respond ONLY with a valid JSON array. No preamble. No markdown fences. "
-            f"Each object must have: question_text (string), options (array of exactly 4 strings), "
-            f"correct_answer (integer 0-3), explanation (string)."
+            f"You are a quiz generator for an AI/ML learning platform. "
+            f"Generate exactly {count} multiple choice questions about '{topic}' at {difficulty} difficulty. "
+            f"Return ONLY a valid JSON array. Each element must have exactly these fields: "
+            f"'question_text' (string), 'options' (array of exactly 4 strings), "
+            f"'correct_answer' (integer 0-3 indicating which option is correct), "
+            f"'explanation' (string, 1-2 sentences explaining why the answer is correct). "
+            f"No extra text, no markdown, just the JSON array."
         )
 
         try:
-            raw = call_gemini(system_prompt, f"Generate {count} questions about {topic} at {difficulty} level.")
-            # Strip markdown fences if model ignores instructions
-            raw = raw.strip().strip('`').strip()
-            if raw.startswith('json'):
-                raw = raw[4:].strip()
+            raw = call_gemini_json(
+                system_prompt,
+                f"Generate {count} {difficulty} questions about: {topic}"
+            )
+            # Clean up any accidental markdown fences
+            raw = raw.strip()
+            if raw.startswith('```'):
+                raw = raw.split('```')[1]
+                if raw.startswith('json'):
+                    raw = raw[4:]
+                raw = raw.strip()
+
             questions = json.loads(raw)
+            if not isinstance(questions, list):
+                questions = questions.get('questions', questions)
+
             return Response({'questions': questions})
         except json.JSONDecodeError as e:
-            return Response({'error': f'Failed to parse AI response as JSON: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response(
+                {'error': f'Failed to parse AI response as JSON: {str(e)}', 'raw': raw[:200]},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
         except Exception as e:
             return Response({'error': f'AI service error: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class AIHintView(APIView):
-    """POST /api/ai/hint/ — code hint giver."""
+    """POST /api/ai/hint/ — Give a coding hint without revealing the full solution."""
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        payload = request.user
-        uid = payload.get('sub', 'anon')
+        user_id = request.user.id
 
-        if check_rate_limit(uid):
+        if check_rate_limit(user_id, cooldown_seconds=5):
             return Response({'error': 'Please wait a moment before requesting another hint.'}, status=status.HTTP_429_TOO_MANY_REQUESTS)
 
         code = request.data.get('code', '')
@@ -93,27 +105,28 @@ class AIHintView(APIView):
             return Response({'error': 'challenge_description is required'}, status=status.HTTP_400_BAD_REQUEST)
 
         system_prompt = (
-            f"You are a coding mentor. The student is working on: {challenge_description}. "
-            f"Give ONE helpful hint only — not the solution, not the full code. "
-            f"Be encouraging. Maximum 3 sentences."
+            f"You are an encouraging coding mentor for an AI/ML learning platform. "
+            f"The student is working on this challenge: {challenge_description}. "
+            f"Give exactly ONE helpful hint — a nudge in the right direction. "
+            f"Do NOT give the solution or write code for them. "
+            f"Be warm and encouraging. Maximum 3 sentences."
         )
 
         try:
-            hint = call_gemini(system_prompt, f"My current code:\n{code}\n\nI need a hint.")
+            hint = call_gemini(system_prompt, f"My current code:\n{code[:1000]}\n\nI need a hint, not the answer.")
             return Response({'hint': hint})
         except Exception as e:
             return Response({'error': f'AI service error: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class AIExplainView(APIView):
-    """POST /api/ai/explain/ — Sim World prediction explainer."""
+    """POST /api/ai/explain/ — Explain a Sim World ML model prediction in plain English."""
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        payload = request.user
-        uid = payload.get('sub', 'anon')
+        user_id = request.user.id
 
-        if check_rate_limit(uid):
+        if check_rate_limit(user_id, cooldown_seconds=5):
             return Response({'error': 'Please wait a moment.'}, status=status.HTTP_429_TOO_MANY_REQUESTS)
 
         dataset_name = request.data.get('dataset_name', '')
@@ -121,15 +134,15 @@ class AIExplainView(APIView):
         features = request.data.get('features', {})
 
         system_prompt = (
-            f"You are explaining an ML model prediction to a student. "
-            f"Dataset: {dataset_name}. Prediction: {prediction}. "
-            f"Key features used: {features}. "
+            f"You are explaining a machine learning model's prediction to a beginner student. "
+            f"Dataset: {dataset_name}. The model predicted: {prediction}. "
+            f"Input features the model used: {features}. "
             f"Explain in 2-3 plain English sentences why the model likely made this prediction. "
             f"No jargon. No code. Be intuitive and educational."
         )
 
         try:
-            explanation = call_gemini(system_prompt, "Explain this prediction.")
+            explanation = call_gemini(system_prompt, "Explain this prediction in plain English.")
             return Response({'explanation': explanation})
         except Exception as e:
             return Response({'error': f'AI service error: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
