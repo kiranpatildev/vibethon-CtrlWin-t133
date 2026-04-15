@@ -1,0 +1,16 @@
+Django==4.2.13
+djangorestframework==3.15.2
+django-cors-headers==4.4.0
+python-dotenv==1.0.1
+PyJWT==2.8.0
+cryptography==42.0.8
+requests==2.32.3
+dj-database-url==2.2.0
+psycopg2-binary==2.9.9
+google-generativeai==0.7.2
+scikit-learn==1.5.1
+pandas==2.2.2
+numpy==1.26.4
+kaggle==1.6.14
+Pillow==10.4.0
+gunicorn==22.0.0

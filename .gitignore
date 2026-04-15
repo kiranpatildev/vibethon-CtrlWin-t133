@@ -1,0 +1,65 @@
+# Python
+venv/
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg
+*.egg-info/
+dist/
+build/
+eggs/
+parts/
+var/
+sdist/
+develop-eggs/
+.installed.cfg
+lib/
+lib64/
+.eggs/
+
+# Django
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+media/
+staticfiles/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Node / React
+node_modules/
+dist/
+.next/
+out/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Scaffold helper
+scaffold.py
+
+# Coverage / test
+.coverage
+htmlcov/
+.pytest_cache/
+.tox/
+
+# Pyodide cache
+*.wasm
+
+# Jupyter
+.ipynb_checkpoints/
