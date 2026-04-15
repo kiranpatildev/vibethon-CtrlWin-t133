@@ -8,18 +8,18 @@ class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserProfile
         fields = [
-            'supabase_uid', 'display_name', 'email',
+            'id', 'display_name', 'email',
             'xp_points', 'streak_count', 'last_active_date',
             'badges', 'created_at', 'level',
         ]
-        read_only_fields = ['supabase_uid', 'xp_points', 'streak_count', 'badges', 'created_at']
+        read_only_fields = ['id', 'xp_points', 'streak_count', 'badges', 'created_at']
 
     def get_level(self, obj):
         xp = obj.xp_points
         if xp < 200:
             return {'name': 'Novice', 'number': 1, 'next_xp': 200}
         elif xp < 500:
-            return {'name': 'Learner', 'number': 2, 'next_xp': 500}
+            return {'name': 'Apprentice', 'number': 2, 'next_xp': 500}
         elif xp < 1000:
             return {'name': 'Practitioner', 'number': 3, 'next_xp': 1000}
         elif xp < 2000:

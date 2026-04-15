@@ -22,6 +22,7 @@ DJANGO_APPS = [
 
 THIRD_PARTY_APPS = [
     'rest_framework',
+    'rest_framework.authtoken',
     'corsheaders',
 ]
 
@@ -96,10 +97,11 @@ USE_TZ = True
 STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Django REST Framework
+# Django REST Framework — using Token Auth (works locally without Supabase)
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'apps.core.auth.SupabaseJWTAuthentication',
+        'rest_framework.authentication.TokenAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
@@ -114,10 +116,9 @@ CORS_ALLOW_CREDENTIALS = True
 # During dev only — tighten before deployment
 CORS_ALLOW_ALL_ORIGINS = DEBUG
 
-# Supabase
+# Supabase (optional — not needed for local dev)
 SUPABASE_URL = os.getenv('SUPABASE_URL', '')
 SUPABASE_ANON_KEY = os.getenv('SUPABASE_ANON_KEY', '')
-SUPABASE_SERVICE_ROLE_KEY = os.getenv('SUPABASE_SERVICE_ROLE_KEY', '')
 
 # Gemini
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', '')

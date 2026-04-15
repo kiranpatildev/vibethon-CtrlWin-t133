@@ -1,80 +1,70 @@
 import { createContext, useContext, useEffect, useState } from 'react'
-import { supabase } from '../lib/supabase'
+import { authStore } from '../lib/supabase'
 import { api } from '../lib/api'
 
 const AuthContext = createContext(null)
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
-  const [session, setSession] = useState(null)
   const [profile, setProfile] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
 
-  const syncProfile = async () => {
-    try {
-      const data = await api.register()
-      setProfile(data)
-    } catch {
-      try {
-        const data = await api.getMe()
-        setProfile(data)
-      } catch (e) {
-        console.warn('Could not fetch profile:', e.message)
-      }
-    }
-  }
-
+  // Restore session from localStorage on mount
   useEffect(() => {
-    // On mount: restore session from Supabase (uses sessionStorage internally)
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session)
-      setUser(session?.user ?? null)
-      if (session) syncProfile()
+    const token = authStore.getToken()
+    const storedUser = authStore.getUser()
+    if (token && storedUser) {
+      setUser(storedUser)
+      // Refresh profile from backend
+      api.getMe()
+        .then(p => setProfile(p))
+        .catch(() => {
+          // Token invalid — clear
+          authStore.clear()
+          setUser(null)
+        })
+        .finally(() => setIsLoading(false))
+    } else {
       setIsLoading(false)
-    })
-
-    // Listen for auth state changes (login, logout, token refresh)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      setSession(session)
-      setUser(session?.user ?? null)
-      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-        if (session) syncProfile()
-      }
-      if (event === 'SIGNED_OUT') {
-        setProfile(null)
-      }
-    })
-
-    return () => subscription.unsubscribe()
+    }
   }, [])
 
   const login = async (email, password) => {
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
-    if (error) throw error
+    const data = await api.login(email, password)
+    authStore.setToken(data.token)
+    const userObj = { id: data.id, email: data.email, display_name: data.display_name }
+    authStore.setUser(userObj)
+    setUser(userObj)
+    setProfile(data)
     return data
   }
 
   const signup = async (email, password, displayName) => {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { data: { full_name: displayName } },
-    })
-    if (error) throw error
+    const data = await api.register(email, password, displayName)
+    authStore.setToken(data.token)
+    const userObj = { id: data.id, email: data.email, display_name: data.display_name }
+    authStore.setUser(userObj)
+    setUser(userObj)
+    setProfile(data)
     return data
   }
 
-  const logout = async () => {
-    await supabase.auth.signOut()
+  const logout = () => {
+    authStore.clear()
+    setUser(null)
+    setProfile(null)
   }
 
   const refreshProfile = async () => {
-    if (session) {
+    if (authStore.getToken()) {
       const data = await api.getMe()
       setProfile(data)
       return data
     }
   }
+
+  // session: used by ProtectedRoute — truthy = logged in
+  const session = user ? { user, access_token: authStore.getToken() } : null
 
   return (
     <AuthContext.Provider value={{ user, session, profile, isLoading, login, signup, logout, refreshProfile }}>

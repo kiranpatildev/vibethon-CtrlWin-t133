@@ -1,8 +1,11 @@
 from django.db import models
+from django.contrib.auth.models import User
 
 
 class UserProfile(models.Model):
-    supabase_uid = models.UUIDField(unique=True, db_index=True)
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile', null=True, blank=True)
+    # Keep supabase_uid as a nullable char field for future Supabase migration
+    supabase_uid = models.CharField(max_length=255, unique=True, null=True, blank=True, db_index=True)
     display_name = models.CharField(max_length=100, blank=True)
     email = models.EmailField(blank=True)
     xp_points = models.IntegerField(default=0)
@@ -16,7 +19,23 @@ class UserProfile(models.Model):
         db_table = 'user_profiles'
 
     def __str__(self):
-        return f"UserProfile({self.supabase_uid}) — {self.display_name or 'unnamed'}"
+        name = self.display_name or (self.user.username if self.user else 'unnamed')
+        return f"UserProfile({self.id}) — {name}"
+
+    @property
+    def level(self):
+        """Return level name and number based on XP."""
+        xp = self.xp_points
+        if xp < 200:
+            return {'name': 'Novice', 'number': 1, 'next_xp': 200}
+        elif xp < 500:
+            return {'name': 'Apprentice', 'number': 2, 'next_xp': 500}
+        elif xp < 1000:
+            return {'name': 'Practitioner', 'number': 3, 'next_xp': 1000}
+        elif xp < 2000:
+            return {'name': 'Expert', 'number': 4, 'next_xp': 2000}
+        else:
+            return {'name': 'Master', 'number': 5, 'next_xp': None}
 
     def add_xp(self, points, reason=''):
         """Add XP points to the user and return new total."""

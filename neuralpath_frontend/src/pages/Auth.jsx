@@ -23,13 +23,9 @@ export default function Auth() {
         navigate('/dashboard')
       } else {
         if (!displayName.trim()) { toast.error('Display name is required'); setLoading(false); return }
-        const { user } = await signup(email, password, displayName)
-        if (user?.identities?.length === 0) {
-          toast.error('Email already registered. Please log in.')
-        } else {
-          toast.success('Account created! Welcome to NeuralPath.')
-          navigate('/dashboard')
-        }
+        await signup(email, password, displayName)
+        toast.success('Account created! Welcome to NeuralPath 🎉')
+        navigate('/dashboard')
       }
     } catch (err) {
       toast.error(err.message || 'Authentication failed')
@@ -119,14 +115,6 @@ export default function Auth() {
             </button>
           </form>
 
-          {/* Dev mode notice when no Supabase config */}
-          {!import.meta.env.VITE_SUPABASE_URL && (
-            <div className="mt-4 p-3 bg-neural-xp/10 border border-neural-xp/30 rounded-lg">
-              <p className="text-neural-xp text-xs text-center">
-                ⚠️ No Supabase config — add VITE_SUPABASE_URL to .env to enable real auth
-              </p>
-            </div>
-          )}
 
           <p className="text-center text-neural-muted text-xs mt-4">
             {tab === 'login' ? "Don't have an account? " : "Already have an account? "}
